@@ -18,6 +18,14 @@ function lerp(start, end, amt) {
 	return (1 - amt) * start + amt * end
 }
 
+function inverseLerp(start, end, amt) {
+	return (amt - start) / (end - start);
+}
+
+function clamp(num, min, max) {
+	return Math.min(Math.max(num, min), max);
+};
+
 function randomRange(min, max) {
 	return Math.random() * (max - min) + min;
 }
@@ -31,7 +39,7 @@ function setLeafPos(leaf) {
 	leaf.position.x = randomRange(-1000, 1000);
 	leaf.position.y = 1000;
 	//leaf.position.y = randomRange(-1000, 1000);
-	leaf.position.z = randomRange(-100, 300);
+	leaf.position.z = randomRange(-500, 500);
 
 
 	//leaf.scale.x = leaf.scale.y = leaf.scale.z = randomRange(.75, 1.75);
@@ -40,17 +48,19 @@ function setLeafPos(leaf) {
 console.log(THREE);
 
 
+let groundLevel = -75;
+
 let scene = new THREE.Scene();
 
 let environment = new THREE.CubeTextureLoader()
 	.setPath("./imgs/test/")
 	.load([
-		'left.jpg',
-		'right.jpg',
-		'top.jpg',
-		'bottom.jpg',
-		'back.jpg',
-		'front.jpg',
+		'left.png',
+		'right.png',
+		'top.png',
+		'bottom.png',
+		'back.png',
+		'front.png',
 	]);
 
 
@@ -82,6 +92,8 @@ let leafColorRange = [
 	0xF8B005
 ];
 
+let shadows = [];
+
 
 loader.load("./models/leaf_0.fbx", function(group) {
 
@@ -105,7 +117,7 @@ loader.load("./models/leaf_0.fbx", function(group) {
 		setLeafPos(newLeaf);
 
 		newLeaf.position.y = randomRange(-25, 1000);
-		console.log(newLeaf.position.y)
+		//console.log(newLeaf.position.y)
 
 		let scale = randomRange(.01, .02);
 
@@ -114,6 +126,22 @@ loader.load("./models/leaf_0.fbx", function(group) {
 		newLeaf.scale.z *= scale;
 
 		newLeaf.rotation.z = randomRange(0, 2 * Math.PI);
+
+
+
+		//NOTE: SHADOWS
+
+		let shadowMaterial = new THREE.MeshBasicMaterial({ color: new THREE.Color(0, 0, .005) });
+		shadowMaterial.transparent = true;
+		let currentShadow = new THREE.Mesh(new THREE.CircleGeometry(1), shadowMaterial);
+		shadowMaterial.opacity = 0;
+		currentShadow.position.y = groundLevel - 10;
+		currentShadow.rotation.x = -Math.PI / 2;
+
+
+		scene.add(currentShadow);
+		shadows.push(currentShadow);
+
 
 	}
 
@@ -153,9 +181,6 @@ function OnScroll(e) {
 let prevFrameTime = 0;
 
 function animate(time) {
-	//cube.rotation.x += 0.01;
-	//cube.rotation.y += 0.01;
-	//camera.rotation.x = Math.sin(time / 10000);
 
 	let deltaTime = (time - prevFrameTime) / 1000;
 	prevFrameTime = time;
@@ -167,11 +192,13 @@ function animate(time) {
 	for (let i = 0; i < leafs.length; i++) {
 
 		let currentLeaf = leafs[i];
+		let currentShadow = shadows[i];
 
 
-		if (currentLeaf.position.y <= -75) {
+		if (currentLeaf.position.y <= groundLevel) {
 
 			currentLeaf.material.opacity -= (opacitySpeed * deltaTime);
+			currentShadow.material.opacity -= (opacitySpeed * deltaTime);
 
 			if (currentLeaf.material.opacity <= 0) {
 
@@ -186,6 +213,20 @@ function animate(time) {
 			currentLeaf.position.z -= forwardSpeed * deltaTime;
 
 			currentLeaf.rotation.z += rotationSpeed * deltaTime;
+
+			currentShadow.position.x = currentLeaf.position.x;
+			currentShadow.position.y = groundLevel - .5;
+			currentShadow.position.z = currentLeaf.position.z;
+
+			let shadowDistance = currentLeaf.position.y - groundLevel;
+			let shadowLerp = clamp(1 - inverseLerp(0, 50, shadowDistance), 0, 1)
+			let shadowScale = lerp(0, 1, shadowLerp);
+			let shadowOpacity = clamp(shadowLerp, 0, .5);
+
+
+			currentShadow.scale.x = currentShadow.scale.y = shadowScale;
+			currentShadow.material.opacity = shadowOpacity;
+
 
 		}
 
