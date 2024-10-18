@@ -55,12 +55,12 @@ let scene = new THREE.Scene();
 let environment = new THREE.CubeTextureLoader()
 	.setPath("./imgs/test/")
 	.load([
-		'left.png',
-		'right.png',
-		'top.png',
-		'bottom.png',
-		'back.png',
-		'front.png',
+		'_.left.png',
+		'_.right.png',
+		'_.top.png',
+		'_.bottom.png',
+		'_.back.png',
+		'_.front.png',
 	]);
 
 
@@ -83,7 +83,7 @@ let loader = new FBXLoader(manager);
 //let leafMesh = new THREE.BoxGeometry(10, 2, 5);
 let leafs = [];
 let leafMesh = null;
-let leafCount = 500;
+let leafCount = 250;
 let leafColorRange = [
 	0xFBBF07,
 	0xF49004,
@@ -116,7 +116,7 @@ loader.load("./models/leaf_0.fbx", function(group) {
 
 		setLeafPos(newLeaf);
 
-		newLeaf.position.y = randomRange(-25, 1000);
+		newLeaf.position.y = randomRange(-25, 1500);
 		//console.log(newLeaf.position.y)
 
 		let scale = randomRange(.01, .02);
@@ -202,12 +202,16 @@ function animate(time) {
 
 			if (currentLeaf.material.opacity <= 0) {
 
-				currentLeaf.material.opacity = 1;
+				//currentLeaf.material.opacity = 1;
 				setLeafPos(currentLeaf);
 
 			}
 
 		} else {
+
+			if (currentLeaf.material.opacity < 1) {
+				currentLeaf.material.opacity += (opacitySpeed * deltaTime);
+			}
 
 			currentLeaf.position.y -= fallSpeed * deltaTime;
 			currentLeaf.position.z -= forwardSpeed * deltaTime;
