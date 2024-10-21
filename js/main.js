@@ -1,7 +1,7 @@
 
 
-import * as THREE from 'three';
-import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader.js';
+import * as THREE from './three.module.js';
+import { FBXLoader } from './FBXLoader.js';
 
 
 function GetPageHeight() {
@@ -36,8 +36,8 @@ function randomRangeInt(min, max) {
 
 function setLeafPos(leaf) {
 
-	leaf.position.x = randomRange(-1000, 1000);
-	leaf.position.y = 1000;
+	leaf.position.x = randomRange(-1000, 100);
+	leaf.position.y = 750;
 	//leaf.position.y = randomRange(-1000, 1000);
 	leaf.position.z = randomRange(-500, 500);
 
@@ -53,14 +53,14 @@ let groundLevel = -75;
 let scene = new THREE.Scene();
 
 let environment = new THREE.CubeTextureLoader()
-	.setPath("./imgs/test/")
+	.setPath("./imgs/")
 	.load([
-		'_.left.png',
-		'_.right.png',
-		'_.top.png',
-		'_.bottom.png',
-		'_.back.png',
-		'_.front.png',
+		'left.png',
+		'right.png',
+		'top.png',
+		'bottom.png',
+		'back.png',
+		'front.png',
 	]);
 
 
@@ -116,7 +116,7 @@ loader.load("./models/leaf_0.fbx", function(group) {
 
 		setLeafPos(newLeaf);
 
-		newLeaf.position.y = randomRange(-25, 1500);
+		newLeaf.position.y = randomRange(-25, 750);
 		//console.log(newLeaf.position.y)
 
 		let scale = randomRange(.01, .02);
@@ -187,22 +187,25 @@ function animate(time) {
 
 	let fallSpeed = 10;
 	let forwardSpeed = 5;
-	let rotationSpeed = Math.PI / 12;
+	let horizontalSpeed = 3;
+	let rotationSpeed = Math.PI / 24;
+	let scales = [1, 1.05, 1.1, 1.5, .8];
 	let opacitySpeed = 1;
 	for (let i = 0; i < leafs.length; i++) {
 
 		let currentLeaf = leafs[i];
 		let currentShadow = shadows[i];
+		let currentScale = scales[i % scales.length];
+
 
 
 		if (currentLeaf.position.y <= groundLevel) {
 
-			currentLeaf.material.opacity -= (opacitySpeed * deltaTime);
-			currentShadow.material.opacity -= (opacitySpeed * deltaTime);
+			currentLeaf.material.opacity -= (opacitySpeed * currentScale * deltaTime);
+			currentShadow.material.opacity -= (opacitySpeed * currentScale * deltaTime) / 2;
 
 			if (currentLeaf.material.opacity <= 0) {
 
-				//currentLeaf.material.opacity = 1;
 				setLeafPos(currentLeaf);
 
 			}
@@ -213,20 +216,26 @@ function animate(time) {
 				currentLeaf.material.opacity += (opacitySpeed * deltaTime);
 			}
 
-			currentLeaf.position.y -= fallSpeed * deltaTime;
-			currentLeaf.position.z -= forwardSpeed * deltaTime;
 
-			currentLeaf.rotation.z += rotationSpeed * deltaTime;
+			currentLeaf.position.y -= fallSpeed * currentScale * deltaTime;
+			currentLeaf.position.z -= forwardSpeed * currentScale * deltaTime;
+			currentLeaf.position.x += horizontalSpeed * currentScale * deltaTime;
+
+			currentLeaf.rotation.z += rotationSpeed * currentScale * deltaTime;
 
 			currentShadow.position.x = currentLeaf.position.x;
 			currentShadow.position.y = groundLevel - .5;
 			currentShadow.position.z = currentLeaf.position.z;
 
 			let shadowDistance = currentLeaf.position.y - groundLevel;
-			let shadowLerp = clamp(1 - inverseLerp(0, 50, shadowDistance), 0, 1)
+			let shadowLerp = clamp(1 - inverseLerp(0, 75, shadowDistance), 0, 1)
 			let shadowScale = lerp(0, 1, shadowLerp);
-			let shadowOpacity = clamp(shadowLerp, 0, .5);
 
+
+			currentShadow.scale.x = currentShadow.scale.y = shadowScale;
+
+
+			let shadowOpacity = clamp(shadowLerp, 0, .5);
 
 			currentShadow.scale.x = currentShadow.scale.y = shadowScale;
 			currentShadow.material.opacity = shadowOpacity;
